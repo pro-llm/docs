@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLMNEX Image API · 接入指南 / Guide</title>
+<style>
+  :root{
+    --bg:#fbfaf9; --surface:#ffffff; --surface-2:#f3f0ef; --code-bg:#1a1620; --code-fg:#eee7ee;
+    --text:#221c25; --muted:#6d6572; --border:#e8e3e5; --accent:#d81e5b; --accent-soft:#fbe4ec;
+    --ok:#1f9d55; --warn:#b9770a; --err:#d0433f;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --maxw:1200px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#131017; --surface:#1a1620; --surface-2:#231d29; --code-bg:#0f0c13; --code-fg:#efe8f0;
+      --text:#efe9f1; --muted:#a59caf; --border:#2d2733; --accent:#ff5c94; --accent-soft:#3a1424;
+      --ok:#38c07a; --warn:#e0a13a; --err:#f0716d;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#fbfaf9; --surface:#ffffff; --surface-2:#f3f0ef; --code-bg:#1a1620; --code-fg:#eee7ee;
+    --text:#221c25; --muted:#6d6572; --border:#e8e3e5; --accent:#d81e5b; --accent-soft:#fbe4ec;
+    --ok:#1f9d55; --warn:#b9770a; --err:#d0433f;
+  }
+  :root[data-theme="dark"]{
+    --bg:#131017; --surface:#1a1620; --surface-2:#231d29; --code-bg:#0f0c13; --code-fg:#efe8f0;
+    --text:#efe9f1; --muted:#a59caf; --border:#2d2733; --accent:#ff5c94; --accent-soft:#3a1424;
+    --ok:#38c07a; --warn:#e0a13a; --err:#f0716d;
+  }
+
+  /* ---- i18n toggle ---- */
+  html[data-lang="en"] .zh{display:none}
+  html[data-lang="zh"] .en{display:none}
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    font-size:15.5px;line-height:1.68;-webkit-font-smoothing:antialiased;font-feature-settings:"cv02","cv03"}
+  a{color:inherit}
+  code,pre,kbd{font-family:var(--mono)}
+  html[data-lang="en"] body{line-height:1.62}
+
+  /* ---- top bar ---- */
+  header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--border)}
+  .top-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:14px;padding:13px 24px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:680;letter-spacing:-.01em}
+  .brand .dot{width:11px;height:11px;border-radius:3px;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .brand small{font-family:var(--mono);font-weight:500;color:var(--muted);font-size:12px;letter-spacing:0}
+  .spacer{flex:1}
+  .base-badge{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:7px;padding:5px 10px;color:var(--text)}
+  .base-badge b{color:var(--accent);font-weight:600}
+  .langseg{display:inline-flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--surface-2)}
+  .langseg button{cursor:pointer;border:0;background:transparent;color:var(--muted);font-family:var(--mono);
+    font-size:12px;padding:6px 10px;font-weight:600}
+  html[data-lang="zh"] .langseg [data-set="zh"], html[data-lang="en"] .langseg [data-set="en"]{background:var(--accent);color:#fff}
+  .tbtn{cursor:pointer;background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    border-radius:7px;width:34px;height:32px;display:grid;place-items:center;font-size:15px}
+  .tbtn:hover{border-color:var(--accent)}
+
+  /* ---- shell ---- */
+  .shell{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:236px 1fr;gap:44px;padding:0 24px}
+  nav.toc{position:sticky;top:64px;align-self:start;height:calc(100vh - 80px);overflow-y:auto;padding:30px 0 40px;font-size:13.5px}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  nav.toc a{display:block;text-decoration:none;color:var(--muted);padding:5px 12px 5px 14px;
+    border-left:2px solid transparent;counter-increment:s}
+  nav.toc a::before{content:counter(s,decimal-leading-zero);font-family:var(--mono);font-size:11px;color:var(--muted);opacity:.6;margin-right:9px}
+  nav.toc a:hover{color:var(--text)}
+  nav.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:600}
+  nav.toc a.active::before{color:var(--accent);opacity:1}
+
+  main{min-width:0;padding:34px 0 120px}
+
+  .hero{padding:8px 0 30px;border-bottom:1px solid var(--border);margin-bottom:38px}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.16em;font-size:11.5px;color:var(--accent);font-weight:600}
+  .hero h1{font-size:34px;line-height:1.12;letter-spacing:-.025em;margin:.4em 0 .25em;text-wrap:balance;font-weight:720}
+  .hero p{font-size:17px;color:var(--muted);max-width:62ch;margin:0}
+  .facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .fact{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px}
+  .fact b{display:block;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:2px}
+  .fact span.v{font-family:var(--mono);color:var(--text)}
+
+  section{margin:0 0 46px;scroll-margin-top:76px}
+  section > h2{font-size:23px;letter-spacing:-.02em;margin:0 0 4px;font-weight:700;display:flex;align-items:baseline;gap:12px}
+  section > h2 .n{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600}
+  h3{font-size:16px;margin:26px 0 8px;letter-spacing:-.01em}
+  p{margin:12px 0;max-width:72ch}
+  .lead{color:var(--muted);margin-top:2px}
+
+  .endpoint{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);
+    border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:14px 0;font-family:var(--mono);font-size:13.5px}
+  .verb{font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:2px 9px;font-size:12px;letter-spacing:.03em}
+  .verb.get{background:var(--ok)}
+  .endpoint .path{color:var(--text);word-break:break-all}
+  .endpoint .path .var{color:var(--accent)}
+
+  .code{position:relative;margin:14px 0;border-radius:11px;overflow:hidden;border:1px solid var(--border)}
+  .code .lang{position:absolute;top:0;right:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:#b9aec0;padding:7px 12px;pointer-events:none}
+  .code .copy{position:absolute;top:6px;right:60px;font-family:var(--mono);font-size:11px;cursor:pointer;
+    background:rgba(255,255,255,.08);color:#cfc6d4;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:3px 9px}
+  .code .copy:hover{background:rgba(255,255,255,.16);color:#fff}
+  pre{margin:0;background:var(--code-bg);color:var(--code-fg);padding:18px;overflow-x:auto;font-size:13px;line-height:1.6;tab-size:2}
+  pre code{color:inherit}
+  .tok-k{color:#ff8fb3}.tok-s{color:#c7e89a}.tok-n{color:#8fd3ff}.tok-c{color:#8a8296;font-style:italic}.tok-p{color:#b7abc4}
+  p code,li code,td code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:.5px 6px;font-size:.86em;color:var(--accent)}
+
+  .twrap{overflow-x:auto;margin:14px 0;border:1px solid var(--border);border-radius:11px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;background:var(--surface-2)}
+  tr:last-child td{border-bottom:none}
+  td code{white-space:nowrap}
+  .req{color:var(--accent);font-family:var(--mono);font-size:11px}
+  .opt{color:var(--muted);font-family:var(--mono);font-size:11px}
+
+  .note{border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--surface);border-radius:9px;padding:12px 16px;margin:16px 0;font-size:14px}
+  .note b{color:var(--accent)}
+  .note.warn{border-left-color:var(--warn)} .note.warn b{color:var(--warn)}
+
+  .pill{font-family:var(--mono);font-size:12px;font-weight:600;border-radius:6px;padding:2px 8px;white-space:nowrap}
+  .pill.s4{color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent)}
+  .pill.s5{color:var(--err);background:color-mix(in srgb,var(--err) 15%,transparent)}
+
+  .ratios{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0}
+  .rc{display:flex;flex-direction:column;align-items:center;gap:6px;width:74px}
+  .rc .box{background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:4px}
+  .rc span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+  footer{max-width:var(--maxw);margin:0 auto;padding:26px 24px 60px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  footer .base-badge{margin-left:auto}
+
+  @media (max-width:860px){
+    .shell{grid-template-columns:1fr;gap:0}
+    nav.toc{display:none}
+    .hero h1{font-size:27px}
+    .base-badge{display:none}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="dot"></span>LLMNEX&nbsp;<small>Image API</small></div>
+    <div class="spacer"></div>
+    <span class="base-badge">Base URL&nbsp; <b>https://www.llmnex.com</b></span>
+    <div class="langseg" id="langseg"><button data-set="zh">中</button><button data-set="en">EN</button></div>
+    <button class="tbtn" id="themeToggle" title="Theme" aria-label="Toggle theme">◑</button>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc" aria-label="Contents">
+    <ol>
+      <li><a href="#overview"><span class="zh">概览</span><span class="en">Overview</span></a></li>
+      <li><a href="#auth"><span class="zh">鉴权</span><span class="en">Authentication</span></a></li>
+      <li><a href="#quickstart"><span class="zh">快速开始</span><span class="en">Quickstart</span></a></li>
+      <li><a href="#models"><span class="zh">支持的模型</span><span class="en">Models</span></a></li>
+      <li><a href="#request"><span class="zh">请求体结构</span><span class="en">Request body</span></a></li>
+      <li><a href="#i2i"><span class="zh">图生图 / 改图</span><span class="en">Image-to-image</span></a></li>
+      <li><a href="#ratio"><span class="zh">宽高比</span><span class="en">Aspect ratio</span></a></li>
+      <li><a href="#size"><span class="zh">分辨率</span><span class="en">Resolution</span></a></li>
+      <li><a href="#params"><span class="zh">其他参数</span><span class="en">Other parameters</span></a></li>
+      <li><a href="#stream"><span class="zh">流式返回</span><span class="en">Streaming</span></a></li>
+      <li><a href="#response"><span class="zh">响应结构</span><span class="en">Response</span></a></li>
+      <li><a href="#errors"><span class="zh">错误处理</span><span class="en">Errors</span></a></li>
+      <li><a href="#examples"><span class="zh">完整示例</span><span class="en">Full examples</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <div class="eyebrow"><span class="zh">Gemini 兼容 · 图像生成</span><span class="en">Gemini-compatible · Image generation</span></div>
+      <h1><span class="zh">图像生成 API 接入指南</span><span class="en">Image Generation API Guide</span></h1>
+      <p><span class="zh">用与 Google Gemini 完全一致的接口调用文生图、图生图与改图。只需把 Base URL 和密钥换成我们发放的即可，无需改动请求结构。</span><span class="en">Call text-to-image, image-to-image and editing through the exact same interface as Google Gemini. Just point the Base URL and key at ours — no change to your request structure.</span></p>
+      <div class="facts">
+        <div class="fact"><b><span class="zh">协议</span><span class="en">Protocol</span></b><span class="v">Gemini generateContent</span></div>
+        <div class="fact"><b><span class="zh">返回</span><span class="en">Returns</span></b><span class="v">base64 PNG</span></div>
+        <div class="fact"><b><span class="zh">最高</span><span class="en">Up to</span></b><span class="v zh">4K · 全 14 比例</span><span class="v en">4K · all 14 ratios</span></div>
+        <div class="fact"><b><span class="zh">能力</span><span class="en">Modes</span></b><span class="v zh">文生图 / 图生图 / 流式</span><span class="v en">t2i / i2i / streaming</span></div>
+      </div>
+    </div>
+
+    <section id="overview">
+      <h2><span class="n">01</span><span class="zh">概览</span><span class="en">Overview</span></h2>
+      <p class="lead"><span class="zh">本服务提供与 Gemini 图像模型（Nano Banana 系列）一致的原生接口，用于文生图、图生图和改图。</span><span class="en">This service exposes native Gemini-image (Nano Banana family) endpoints for text-to-image, image-to-image and editing.</span></p>
+      <div class="endpoint"><span class="verb">POST</span><span class="path">/v1beta/models/<span class="var">{model}</span>:generateContent</span></div>
+      <div class="endpoint"><span class="verb">POST</span><span class="path">/v1beta/models/<span class="var">{model}</span>:streamGenerateContent</span></div>
+      <div class="endpoint"><span class="verb get">GET</span><span class="path">/v1beta/models</span></div>
+      <p><span class="zh">与官方唯一的区别：把 Base URL 指向 <code>https://www.llmnex.com</code>，把密钥换成我们为你签发的密钥。请求体、参数、响应结构与官方一致;只需把模型名改用下方我们的 16 个(分辨率写在后缀里),其余几乎零改动。</span><span class="en">The only difference from Google: point the Base URL at <code>https://www.llmnex.com</code> and use the key we issue you. Request body, parameters and response shape match the official API; just use one of our 16 model names below (resolution is in the suffix) — otherwise virtually no changes.</span></p>
+      <div class="note"><b><span class="zh">提示</span><span class="en">Note</span></b> <span class="zh">图像模型固定返回图片，你<strong>无需</strong>设置 <code>responseModalities</code>。</span><span class="en">Image models always return an image — you do <strong>not</strong> need to set <code>responseModalities</code>.</span></div>
+    </section>
+
+    <section id="auth">
+      <h2><span class="n">02</span><span class="zh">鉴权</span><span class="en">Authentication</span></h2>
+      <p><span class="zh">每个请求需带上你的密钥。两种写法任选其一：</span><span class="en">Every request carries your key. Use either header:</span></p>
+      <div class="twrap zh"><table>
+        <tr><th>方式</th><th>请求头</th></tr>
+        <tr><td>推荐</td><td><code>x-goog-api-key: 你的密钥</code></td></tr>
+        <tr><td>兼容</td><td><code>Authorization: Bearer 你的密钥</code></td></tr>
+      </table></div>
+      <div class="twrap en"><table>
+        <tr><th>Method</th><th>Header</th></tr>
+        <tr><td>Recommended</td><td><code>x-goog-api-key: YOUR_API_KEY</code></td></tr>
+        <tr><td>Compatible</td><td><code>Authorization: Bearer YOUR_API_KEY</code></td></tr>
+      </table></div>
+      <p><span class="zh">另需 <code>Content-Type: application/json</code>。密钥请妥善保管，不要写进前端页面或公开仓库。</span><span class="en">Also send <code>Content-Type: application/json</code>. Keep your key secret — never embed it in front-end pages or public repos.</span></p>
+    </section>
+
+    <section id="quickstart">
+      <h2><span class="n">03</span><span class="zh">快速开始</span><span class="en">Quickstart</span></h2>
+      <p><span class="zh">最小可用的一次文生图调用：</span><span class="en">A minimal text-to-image call:</span></p>
+      <div class="code zh"><span class="lang">bash</span>
+<pre><code><span class="tok-k">curl</span> https://www.llmnex.com/v1beta/models/gemini-3-pro-image-2k:generateContent \
+  -H <span class="tok-s">"x-goog-api-key: 你的密钥"</span> \
+  -H <span class="tok-s">"Content-Type: application/json"</span> \
+  -d <span class="tok-s">'{
+    "contents": [{ "parts": [{ "text": "一只戴宇航头盔的柯基，工作室灯光" }] }]
+  }'</span></code></pre></div>
+      <div class="code en"><span class="lang">bash</span>
+<pre><code><span class="tok-k">curl</span> https://www.llmnex.com/v1beta/models/gemini-3-pro-image-2k:generateContent \
+  -H <span class="tok-s">"x-goog-api-key: YOUR_API_KEY"</span> \
+  -H <span class="tok-s">"Content-Type: application/json"</span> \
+  -d <span class="tok-s">'{
+    "contents": [{ "parts": [{ "text": "a corgi wearing an astronaut helmet, studio lighting" }] }]
+  }'</span></code></pre></div>
+      <p><span class="zh">返回体中的图片是 base64 编码的 PNG，位于 <code>candidates[0].content.parts[0].inlineData.data</code>。</span><span class="en">The image comes back as base64-encoded PNG at <code>candidates[0].content.parts[0].inlineData.data</code>.</span></p>
+    </section>
+
+    <section id="models">
+      <h2><span class="n">04</span><span class="zh">支持的模型</span><span class="en">Models</span></h2>
+      <p><span class="zh">在路径里的 <code>{model}</code> 处填写模型名。名称末尾的 <code>-preview</code> 会被自动忽略。</span><span class="en">Put the model name in the <code>{model}</code> path segment. A trailing <code>-preview</code> is stripped automatically.</span></p>
+      <p><span class="zh"><b>模型名 = 模型族 + 分辨率后缀</b>。选哪个模型就等于选哪个分辨率——分辨率写在名称后缀里(见第 8 节),你<strong>不需要</strong>再单独传 <code>imageSize</code>。共 16 个模型:</span><span class="en"><b>Model name = family + resolution suffix</b>. Choosing a model = choosing the resolution — resolution lives in the suffix (see §8), you do <strong>not</strong> pass <code>imageSize</code> separately. 16 models total:</span></p>
+      <div class="twrap zh"><table>
+        <tr><th>模型族</th><th>可用模型(后缀)</th><th>定位</th></tr>
+        <tr><td>gemini-3-pro-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>最高画质</td></tr>
+        <tr><td>gemini-3.1-flash-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>快速、均衡</td></tr>
+        <tr><td>gemini-2.5-flash-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>上一代快速</td></tr>
+        <tr><td>gemini-3.1-flash-lite-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>轻量最省(<b>恒 1K</b>)</td></tr>
+      </table></div>
+      <div class="twrap en"><table>
+        <tr><th>Family</th><th>Models (suffix)</th><th>Positioning</th></tr>
+        <tr><td>gemini-3-pro-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>Highest quality</td></tr>
+        <tr><td>gemini-3.1-flash-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>Fast, balanced</td></tr>
+        <tr><td>gemini-2.5-flash-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>Previous-gen fast</td></tr>
+        <tr><td>gemini-3.1-flash-lite-image</td><td><code>-1k</code> <code>-2k</code> <code>-4k</code> <code>-c</code></td><td>Lightweight (<b>always 1K</b>)</td></tr>
+      </table></div>
+      <p class="lead"><span class="zh">例:<code>gemini-3-pro-image-2k</code>、<code>gemini-2.5-flash-image-1k</code>。后缀:<code>-1k</code>→1K、<code>-2k</code>→2K、<code>-4k</code>→4K、<code>-c</code>→由你自传 <code>imageSize</code> 决定(默认 1K)。<code>lite</code> 族恒 1K,后缀再高也按 1K 出。用 <code>GET /v1beta/models</code> 拉当前完整列表。</span><span class="en">E.g. <code>gemini-3-pro-image-2k</code>, <code>gemini-2.5-flash-image-1k</code>. Suffix: <code>-1k</code>→1K, <code>-2k</code>→2K, <code>-4k</code>→4K, <code>-c</code>→set by your own <code>imageSize</code> (default 1K). The <code>lite</code> family is always 1K regardless of suffix. Use <code>GET /v1beta/models</code> for the full list.</span></p>
+    </section>
+
+    <section id="request">
+      <h2><span class="n">05</span><span class="zh">请求体结构</span><span class="en">Request body</span></h2>
+      <p><span class="zh">顶层字段与 Gemini 一致：</span><span class="en">Top-level fields match Gemini:</span></p>
+      <div class="twrap zh"><table>
+        <tr><th>字段</th><th></th><th>说明</th></tr>
+        <tr><td><code>contents[]</code></td><td class="req">必填</td><td>内容数组，每个元素含 <code>parts[]</code>。</td></tr>
+        <tr><td><code>parts[].text</code></td><td class="opt">文本</td><td>提示词。多个 text 片段会用空格拼接成一条 prompt。至少要有一段非空 text 或一张输入图。</td></tr>
+        <tr><td><code>parts[].inlineData</code></td><td class="opt">图片</td><td>图生图/改图的参考图，见第 6 节。</td></tr>
+        <tr><td><code>generationConfig.imageConfig.aspectRatio</code></td><td class="opt">可选</td><td>宽高比，见第 7 节。</td></tr>
+        <tr><td><code>generationConfig.imageConfig.imageSize</code></td><td class="opt">仅 -c</td><td><b>一般不用传</b>——分辨率由模型名后缀决定;仅 <code>-c</code> 档读此字段,固定档(-1k/-2k/-4k)会忽略。见第 8 节。</td></tr>
+        <tr><td><code>generationConfig.seed</code></td><td class="opt">可选</td><td>整数随机种子，见第 9 节。</td></tr>
+      </table></div>
+      <div class="twrap en"><table>
+        <tr><th>Field</th><th></th><th>Description</th></tr>
+        <tr><td><code>contents[]</code></td><td class="req">required</td><td>Array of contents; each has <code>parts[]</code>.</td></tr>
+        <tr><td><code>parts[].text</code></td><td class="opt">text</td><td>The prompt. Multiple text parts are joined with a space. At least one non-empty text or one input image is required.</td></tr>
+        <tr><td><code>parts[].inlineData</code></td><td class="opt">image</td><td>Reference image for i2i / editing — see §6.</td></tr>
+        <tr><td><code>generationConfig.imageConfig.aspectRatio</code></td><td class="opt">optional</td><td>Aspect ratio — see §7.</td></tr>
+        <tr><td><code>generationConfig.imageConfig.imageSize</code></td><td class="opt">-c only</td><td><b>Usually omit</b> — resolution comes from the model-name suffix; only <code>-c</code> reads this, fixed tiers (-1k/-2k/-4k) ignore it. See §8.</td></tr>
+        <tr><td><code>generationConfig.seed</code></td><td class="opt">optional</td><td>Integer seed — see §9.</td></tr>
+      </table></div>
+    </section>
+
+    <section id="i2i">
+      <h2><span class="n">06</span><span class="zh">图生图 / 改图</span><span class="en">Image-to-image / editing</span></h2>
+      <p><span class="zh">把参考图作为 <code>inlineData</code> 放进 <code>parts</code>，与文本 part 并列。图片用 base64 编码（<strong>不要</strong>带 <code>data:</code> 前缀）。</span><span class="en">Add reference images as <code>inlineData</code> parts alongside the text part. Encode them as raw base64 (<strong>no</strong> <code>data:</code> prefix).</span></p>
+      <div class="code zh"><span class="lang">json</span>
+<pre><code><span class="tok-p">{</span>
+  <span class="tok-k">"contents"</span>: [{ <span class="tok-k">"parts"</span>: [
+    <span class="tok-p">{</span> <span class="tok-k">"text"</span>: <span class="tok-s">"把背景换成雪山，保留主体"</span> <span class="tok-p">}</span>,
+    <span class="tok-p">{</span> <span class="tok-k">"inlineData"</span>: <span class="tok-p">{</span> <span class="tok-k">"mimeType"</span>: <span class="tok-s">"image/png"</span>, <span class="tok-k">"data"</span>: <span class="tok-s">"iVBORw0KGgo..."</span> <span class="tok-p">}</span> <span class="tok-p">}</span>
+  ]}]
+<span class="tok-p">}</span></code></pre></div>
+      <div class="code en"><span class="lang">json</span>
+<pre><code><span class="tok-p">{</span>
+  <span class="tok-k">"contents"</span>: [{ <span class="tok-k">"parts"</span>: [
+    <span class="tok-p">{</span> <span class="tok-k">"text"</span>: <span class="tok-s">"replace the background with snowy mountains, keep the subject"</span> <span class="tok-p">}</span>,
+    <span class="tok-p">{</span> <span class="tok-k">"inlineData"</span>: <span class="tok-p">{</span> <span class="tok-k">"mimeType"</span>: <span class="tok-s">"image/png"</span>, <span class="tok-k">"data"</span>: <span class="tok-s">"iVBORw0KGgo..."</span> <span class="tok-p">}</span> <span class="tok-p">}</span>
+  ]}]
+<span class="tok-p">}</span></code></pre></div>
+      <div class="twrap zh"><table>
+        <tr><th>限制</th><th>值</th></tr>
+        <tr><td>参考图数量</td><td>最多 <code>14</code> 张</td></tr>
+        <tr><td>单张大小</td><td>≤ <code>20&nbsp;MB</code></td></tr>
+        <tr><td>格式</td><td><code>image/png</code> · <code>image/jpeg</code> · <code>image/webp</code></td></tr>
+      </table></div>
+      <div class="twrap en"><table>
+        <tr><th>Limit</th><th>Value</th></tr>
+        <tr><td>Reference images</td><td>up to <code>14</code></td></tr>
+        <tr><td>Per image</td><td>≤ <code>20&nbsp;MB</code></td></tr>
+        <tr><td>Formats</td><td><code>image/png</code> · <code>image/jpeg</code> · <code>image/webp</code></td></tr>
+      </table></div>
+    </section>
+
+    <section id="ratio">
+      <h2><span class="n">07</span><span class="zh">宽高比</span><span class="en">Aspect ratio</span></h2>
+      <p><span class="zh">通过 <code>imageConfig.aspectRatio</code> 指定，支持全部 14 个官方比例。不传则默认 <code>1:1</code>。</span><span class="en">Set via <code>imageConfig.aspectRatio</code>. All 14 official ratios are supported; defaults to <code>1:1</code> if omitted.</span></p>
+      <div class="ratios" id="ratioChips"></div>
+      <p class="lead"><span class="zh">取值：</span><span class="en">Values: </span><code>1:1</code> <code>16:9</code> <code>9:16</code> <code>4:3</code> <code>3:4</code> <code>3:2</code> <code>2:3</code> <code>5:4</code> <code>4:5</code> <code>21:9</code> <code>4:1</code> <code>1:4</code> <code>8:1</code> <code>1:8</code></p>
+    </section>
+
+    <section id="size">
+      <h2><span class="n">08</span><span class="zh">分辨率</span><span class="en">Resolution</span></h2>
+      <p><span class="zh"><b>分辨率由你选的模型名后缀决定</b>,不用自己传 <code>imageSize</code>:</span><span class="en"><b>Resolution is chosen by the model-name suffix</b> — you don't pass <code>imageSize</code>:</span></p>
+      <div class="twrap zh"><table>
+        <tr><th>模型后缀</th><th>出图分辨率</th></tr>
+        <tr><td><code>-1k</code></td><td>1K(约 1024px,最快、带宽最小)</td></tr>
+        <tr><td><code>-2k</code></td><td>2K(约 2048px)</td></tr>
+        <tr><td><code>-4k</code></td><td>4K(约 4096px,较慢较大)</td></tr>
+        <tr><td><code>-c</code></td><td><b>自定义</b>:由请求体 <code>generationConfig.imageConfig.imageSize</code> 决定(<code>1K</code>/<code>2K</code>/<code>4K</code>,大小写不敏感),不传默认 1K</td></tr>
+      </table></div>
+      <div class="twrap en"><table>
+        <tr><th>Suffix</th><th>Output resolution</th></tr>
+        <tr><td><code>-1k</code></td><td>1K (~1024px, fastest, smallest)</td></tr>
+        <tr><td><code>-2k</code></td><td>2K (~2048px)</td></tr>
+        <tr><td><code>-4k</code></td><td>4K (~4096px, slower, larger)</td></tr>
+        <tr><td><code>-c</code></td><td><b>Custom</b>: set by <code>generationConfig.imageConfig.imageSize</code> in the body (<code>1K</code>/<code>2K</code>/<code>4K</code>, case-insensitive); default 1K</td></tr>
+      </table></div>
+      <div class="note"><b><span class="zh">固定档会锁定分辨率</span><span class="en">Fixed tiers lock the resolution</span></b><span class="zh">:用 <code>-1k</code>/<code>-2k</code>/<code>-4k</code> 时,请求体里传的 <code>imageSize</code> 会被<strong>忽略</strong>——只有 <code>-c</code> 档才读你传的 <code>imageSize</code>。<code>gemini-3.1-flash-lite-image-*</code> 恒 1K,选 <code>-2k</code>/<code>-4k</code> 也按 1K 出。</span><span class="en">: with <code>-1k</code>/<code>-2k</code>/<code>-4k</code>, any <code>imageSize</code> in the body is <strong>ignored</strong> — only <code>-c</code> reads your <code>imageSize</code>. <code>gemini-3.1-flash-lite-image-*</code> is always 1K even for <code>-2k</code>/<code>-4k</code>.</span></div>
+    </section>
+
+    <section id="params">
+      <h2><span class="n">09</span><span class="zh">其他参数</span><span class="en">Other parameters</span></h2>
+      <div class="twrap zh"><table>
+        <tr><th>参数</th><th>行为</th></tr>
+        <tr><td><code>seed</code></td><td>整数。传入后透传给后端，用于尽量复现同类结果。</td></tr>
+        <tr><td><code>candidateCount</code></td><td>可传，但本服务<strong>单次调用固定返回 1 张</strong>图。需要多张请多次调用。</td></tr>
+        <tr><td><code>temperature</code> 等采样/文本参数</td><td>会被接收但不影响图像生成（图像后端无对应能力），传了也不会报错。</td></tr>
+      </table></div>
+      <div class="twrap en"><table>
+        <tr><th>Parameter</th><th>Behavior</th></tr>
+        <tr><td><code>seed</code></td><td>Integer, passed through to the backend to help reproduce similar results.</td></tr>
+        <tr><td><code>candidateCount</code></td><td>Accepted, but each call <strong>always returns exactly 1 image</strong>. Call again for more.</td></tr>
+        <tr><td><code>temperature</code> &amp; other sampling/text params</td><td>Accepted but have no effect on image generation (no backend equivalent); they won't cause errors.</td></tr>
+      </table></div>
+    </section>
+
+    <section id="stream">
+      <h2><span class="n">10</span><span class="zh">流式返回</span><span class="en">Streaming</span></h2>
+      <div class="note warn"><b><span class="zh">建议使用一次性接口 <code>generateContent</code>，不建议流式。</span><span class="en">Prefer the one-shot <code>generateContent</code> — streaming is not recommended.</span></b> <span class="zh">图像是整图一次性生成的，流式<strong>不会</strong>逐步、渐进地显示画面——它只会在生成结束时给你<strong>同一张完整图片</strong>，和非流式结果一模一样，反而多一层 SSE 解析开销。<code>streamGenerateContent</code> 仅为与 Gemini SDK 的流式调用保持兼容而保留。</span><span class="en">Images are generated all at once, so streaming does <strong>not</strong> render the picture progressively — it just hands you <strong>the same complete image</strong> at the end, identical to the non-streaming result, plus the overhead of parsing SSE. <code>streamGenerateContent</code> exists only for compatibility with Gemini SDK streaming calls.</span></div>
+      <p><span class="zh">如确需兼容流式客户端：把接口名换成 <code>streamGenerateContent</code> 即可走 SSE。因图像一次性生成完毕，只会返回<strong>单个数据块</strong>，其结构与 <code>generateContent</code> 完全一致。</span><span class="en">If you must support a streaming client: switch the method to <code>streamGenerateContent</code> for SSE. Because the image is produced in one shot, it returns a <strong>single chunk</strong> whose structure is identical to <code>generateContent</code>.</span></p>
+      <div class="endpoint"><span class="verb">POST</span><span class="path">/v1beta/models/<span class="var">{model}</span>:streamGenerateContent</span></div>
+      <div class="code"><span class="lang">SSE</span>
+<pre><code>Content-Type: text/event-stream
+
+data: {"candidates":[{"content":{"parts":[{"inlineData":{...}}]}}]}</code></pre></div>
+    </section>
+
+    <section id="response">
+      <h2><span class="n">11</span><span class="zh">响应结构</span><span class="en">Response</span></h2>
+      <div class="code"><span class="lang">json</span>
+<pre><code><span class="tok-p">{</span>
+  <span class="tok-k">"candidates"</span>: [{
+    <span class="tok-k">"content"</span>: <span class="tok-p">{</span>
+      <span class="tok-k">"role"</span>: <span class="tok-s">"model"</span>,
+      <span class="tok-k">"parts"</span>: [{ <span class="tok-k">"inlineData"</span>: <span class="tok-p">{</span> <span class="tok-k">"mimeType"</span>: <span class="tok-s">"image/png"</span>, <span class="tok-k">"data"</span>: <span class="tok-s">"&lt;base64 PNG&gt;"</span> <span class="tok-p">}</span> }]
+    <span class="tok-p">}</span>,
+    <span class="tok-k">"finishReason"</span>: <span class="tok-s">"STOP"</span>
+  }]
+<span class="tok-p">}</span></code></pre></div>
+      <p><span class="zh">取图：解码 <code>candidates[0].content.parts[0].inlineData.data</code>（base64）得到 PNG 字节。</span><span class="en">To get the image: base64-decode <code>candidates[0].content.parts[0].inlineData.data</code> into PNG bytes.</span></p>
+    </section>
+
+    <section id="errors">
+      <h2><span class="n">12</span><span class="zh">错误处理</span><span class="en">Errors</span></h2>
+      <p><span class="zh">错误 body 为 new-api 结构:</span><span class="en">Error body uses the new-api shape: </span><code>{"error":{"message":..,"type":..,"code":..}}</code><span class="zh">(上游错误 <code>type</code> 为 <code>upstream_error</code>;平台自身错误如未知模型/未匹配渠道为 <code>new_api_error</code>)。<b>4xx 保留具体原因,5xx 为通用文案。</b></span><span class="en"> (upstream errors carry <code>type: upstream_error</code>; platform errors like unknown-model carry <code>new_api_error</code>). <b>4xx keep the specific reason, 5xx are generic.</b></span></p>
+      <div class="twrap zh"><table>
+        <tr><th>HTTP</th><th>status</th><th>含义 / 处理</th></tr>
+        <tr><td><span class="pill s4">400</span></td><td><code>INVALID_ARGUMENT</code></td><td>请求体有误（如缺 contents、图片 base64 非法、参考图超 14 张）。修正后重发。</td></tr>
+        <tr><td><span class="pill s4">401</span></td><td><code>UNAUTHENTICATED</code></td><td>密钥缺失或无效。</td></tr>
+        <tr><td><span class="pill s4">429</span></td><td><code>RESOURCE_EXHAUSTED</code></td><td>上游限流或后端过载(<code>system under load</code>)。指数退避后重试。</td></tr>
+        <tr><td><span class="pill s4">451</span></td><td><code>INVALID_ARGUMENT</code></td><td>内容审核:提示词/图片被判不安全(<code>prompt_unsafe</code>/<code>image_unsafe</code>)。<b>终态,别重试</b>——请修改内容。</td></tr>
+        <tr><td><span class="pill s5">503</span></td><td><code>UNAVAILABLE</code></td><td>上游临时不可用/池冷却/超时。稍后退避重试。</td></tr>
+      </table></div>
+      <div class="twrap en"><table>
+        <tr><th>HTTP</th><th>status</th><th>Meaning / handling</th></tr>
+        <tr><td><span class="pill s4">400</span></td><td><code>INVALID_ARGUMENT</code></td><td>Malformed request (missing contents, invalid image base64, more than 14 reference images). Fix and resend.</td></tr>
+        <tr><td><span class="pill s4">401</span></td><td><code>UNAUTHENTICATED</code></td><td>Missing or invalid key.</td></tr>
+        <tr><td><span class="pill s4">429</span></td><td><code>RESOURCE_EXHAUSTED</code></td><td>Upstream rate limit or backend overload (<code>system under load</code>). Retry with exponential backoff.</td></tr>
+        <tr><td><span class="pill s4">451</span></td><td><code>INVALID_ARGUMENT</code></td><td>Content moderation: prompt/image deemed unsafe (<code>prompt_unsafe</code>/<code>image_unsafe</code>). <b>Terminal — do not retry</b>; change the content.</td></tr>
+        <tr><td><span class="pill s5">503</span></td><td><code>UNAVAILABLE</code></td><td>Upstream temporarily unavailable / pool cooldown / timeout. Back off and retry.</td></tr>
+      </table></div>
+    </section>
+
+    <section id="examples">
+      <h2><span class="n">13</span><span class="zh">完整示例</span><span class="en">Full examples</span></h2>
+      <h3><span class="zh">Python（requests）</span><span class="en">Python (requests)</span></h3>
+      <div class="code zh"><span class="lang">python</span>
+<pre><code><span class="tok-k">import</span> requests, base64
+
+resp = requests.post(
+    <span class="tok-s">"https://www.llmnex.com/v1beta/models/gemini-3-pro-image-2k:generateContent"</span>,
+    headers={<span class="tok-s">"x-goog-api-key"</span>: <span class="tok-s">"你的密钥"</span>},
+    json={
+        <span class="tok-s">"contents"</span>: [{<span class="tok-s">"parts"</span>: [{<span class="tok-s">"text"</span>: <span class="tok-s">"雪山湖泊，黄金时刻"</span>}]}],
+        <span class="tok-s">"generationConfig"</span>: {<span class="tok-s">"imageConfig"</span>: {<span class="tok-s">"aspectRatio"</span>: <span class="tok-s">"16:9"</span>}},
+    },
+    timeout=300,
+)
+data = resp.json()[<span class="tok-s">"candidates"</span>][<span class="tok-n">0</span>][<span class="tok-s">"content"</span>][<span class="tok-s">"parts"</span>][<span class="tok-n">0</span>][<span class="tok-s">"inlineData"</span>][<span class="tok-s">"data"</span>]
+<span class="tok-k">open</span>(<span class="tok-s">"out.png"</span>, <span class="tok-s">"wb"</span>).write(base64.b64decode(data))</code></pre></div>
+      <div class="code en"><span class="lang">python</span>
+<pre><code><span class="tok-k">import</span> requests, base64
+
+resp = requests.post(
+    <span class="tok-s">"https://www.llmnex.com/v1beta/models/gemini-3-pro-image-2k:generateContent"</span>,
+    headers={<span class="tok-s">"x-goog-api-key"</span>: <span class="tok-s">"YOUR_API_KEY"</span>},
+    json={
+        <span class="tok-s">"contents"</span>: [{<span class="tok-s">"parts"</span>: [{<span class="tok-s">"text"</span>: <span class="tok-s">"a mountain lake at golden hour"</span>}]}],
+        <span class="tok-s">"generationConfig"</span>: {<span class="tok-s">"imageConfig"</span>: {<span class="tok-s">"aspectRatio"</span>: <span class="tok-s">"16:9"</span>}},
+    },
+    timeout=300,
+)
+data = resp.json()[<span class="tok-s">"candidates"</span>][<span class="tok-n">0</span>][<span class="tok-s">"content"</span>][<span class="tok-s">"parts"</span>][<span class="tok-n">0</span>][<span class="tok-s">"inlineData"</span>][<span class="tok-s">"data"</span>]
+<span class="tok-k">open</span>(<span class="tok-s">"out.png"</span>, <span class="tok-s">"wb"</span>).write(base64.b64decode(data))</code></pre></div>
+
+      <h3>Node.js (fetch)</h3>
+      <div class="code zh"><span class="lang">javascript</span>
+<pre><code><span class="tok-k">const</span> r = <span class="tok-k">await</span> fetch(
+  <span class="tok-s">"https://www.llmnex.com/v1beta/models/gemini-3-pro-image-2k:generateContent"</span>,
+  {
+    method: <span class="tok-s">"POST"</span>,
+    headers: { <span class="tok-s">"x-goog-api-key"</span>: <span class="tok-s">"你的密钥"</span>, <span class="tok-s">"Content-Type"</span>: <span class="tok-s">"application/json"</span> },
+    body: <span class="tok-k">JSON</span>.stringify({
+      contents: [{ parts: [{ text: <span class="tok-s">"霓虹夜色下的城市街道"</span> }] }],
+      generationConfig: { imageConfig: { aspectRatio: <span class="tok-s">"9:16"</span> } },
+    }),
+  }
+);
+<span class="tok-k">const</span> d = <span class="tok-k">await</span> r.json();
+<span class="tok-k">const</span> b64 = d.candidates[<span class="tok-n">0</span>].content.parts[<span class="tok-n">0</span>].inlineData.data;
+<span class="tok-k">require</span>(<span class="tok-s">"fs"</span>).writeFileSync(<span class="tok-s">"out.png"</span>, <span class="tok-k">Buffer</span>.from(b64, <span class="tok-s">"base64"</span>));</code></pre></div>
+      <div class="code en"><span class="lang">javascript</span>
+<pre><code><span class="tok-k">const</span> r = <span class="tok-k">await</span> fetch(
+  <span class="tok-s">"https://www.llmnex.com/v1beta/models/gemini-3-pro-image-2k:generateContent"</span>,
+  {
+    method: <span class="tok-s">"POST"</span>,
+    headers: { <span class="tok-s">"x-goog-api-key"</span>: <span class="tok-s">"YOUR_API_KEY"</span>, <span class="tok-s">"Content-Type"</span>: <span class="tok-s">"application/json"</span> },
+    body: <span class="tok-k">JSON</span>.stringify({
+      contents: [{ parts: [{ text: <span class="tok-s">"a city street under neon lights at night"</span> }] }],
+      generationConfig: { imageConfig: { aspectRatio: <span class="tok-s">"9:16"</span> } },
+    }),
+  }
+);
+<span class="tok-k">const</span> d = <span class="tok-k">await</span> r.json();
+<span class="tok-k">const</span> b64 = d.candidates[<span class="tok-n">0</span>].content.parts[<span class="tok-n">0</span>].inlineData.data;
+<span class="tok-k">require</span>(<span class="tok-s">"fs"</span>).writeFileSync(<span class="tok-s">"out.png"</span>, <span class="tok-k">Buffer</span>.from(b64, <span class="tok-s">"base64"</span>));</code></pre></div>
+      <div class="note"><b><span class="zh">用官方 SDK？</span><span class="en">Using an official SDK?</span></b> <span class="zh">官方 <code>google-genai</code> 等 SDK 也可直接用——把 Base URL 指到 <code>https://www.llmnex.com</code>、密钥换成你的即可，模型名填上表中的名称。</span><span class="en">Official SDKs such as <code>google-genai</code> work too — point the Base URL at <code>https://www.llmnex.com</code>, use your key, and pass a model name from the table above.</span></div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>LLMNEX Image API · Gemini-compatible</span>
+  <span class="base-badge">https://www.llmnex.com</span>
+</footer>
+
+<script>
+(function(){
+  var root=document.documentElement;
+
+  // language toggle (persisted)
+  var seg=document.getElementById('langseg');
+  try{var sv=localStorage.getItem('pl_lang'); if(sv)root.setAttribute('data-lang',sv);}catch(e){}
+  seg.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    var l=b.getAttribute('data-set'); root.setAttribute('data-lang',l);
+    root.setAttribute('lang', l==='en'?'en':'zh-CN');
+    try{localStorage.setItem('pl_lang',l);}catch(e){}
+  });
+
+  // theme toggle
+  function sysDark(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;}
+  document.getElementById('themeToggle').addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme')||(sysDark()?'dark':'light');
+    root.setAttribute('data-theme', cur==='dark'?'light':'dark');
+  });
+
+  // ratio chips (proportional boxes)
+  var ratios=['1:1','16:9','9:16','4:3','3:4','3:2','2:3','5:4','4:5','21:9'];
+  var box=44, wrap=document.getElementById('ratioChips');
+  ratios.forEach(function(r){
+    var a=r.split(':').map(Number), w,h;
+    if(a[0]>=a[1]){w=box; h=Math.max(10,box*a[1]/a[0]);} else {h=box; w=Math.max(10,box*a[0]/a[1]);}
+    var d=document.createElement('div'); d.className='rc';
+    d.innerHTML='<div class="box" style="width:'+w.toFixed(0)+'px;height:'+h.toFixed(0)+'px"></div><span>'+r+'</span>';
+    wrap.appendChild(d);
+  });
+
+  // copy buttons (copies only the visible code block's text)
+  document.querySelectorAll('.code').forEach(function(c){
+    var b=document.createElement('button'); b.className='copy';
+    b.textContent='copy';
+    b.addEventListener('click',function(){
+      var t=c.querySelector('pre').innerText;
+      navigator.clipboard&&navigator.clipboard.writeText(t).then(function(){
+        b.textContent='✓'; setTimeout(function(){b.textContent='copy';},1300);
+      });
+    });
+    c.appendChild(b);
+  });
+
+  // active TOC
+  var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+  var map={}; links.forEach(function(l){map[l.getAttribute('href').slice(1)]=l;});
+  var obs=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){
+      links.forEach(function(l){l.classList.remove('active');});
+      var l=map[e.target.id]; if(l)l.classList.add('active');
+    }});
+  },{rootMargin:'-64px 0px -70% 0px'});
+  document.querySelectorAll('main section[id]').forEach(function(s){obs.observe(s);});
+})();
+</script>
+</body>
+</html>
