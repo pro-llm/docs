@@ -1,0 +1,75 @@
+site_name: LLMNEX 文档
+site_description: LLMNEX API 中转服务 —— 生图、文本与多模态接入指南
+site_url: https://pro-llm.github.io/docs/
+repo_url: https://github.com/pro-llm/docs
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: zh
+  icon:
+    logo: material/image-multiple-outline
+    repo: fontawesome/brands/github
+  features:
+    - navigation.tabs          # 顶部一级导航
+    - navigation.sections      # 侧边栏分组展开
+    - navigation.top           # 回到顶部
+    - navigation.instant       # 站内瞬时跳转
+    - navigation.tracking      # 滚动时更新地址栏锚点
+    - toc.follow               # 右侧目录跟随滚动
+    - search.suggest
+    - search.highlight
+    - content.code.copy        # 代码块复制按钮
+    - content.code.annotate
+    - content.tabs.link        # 多处代码 tab 联动切换
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle: { icon: material/brightness-auto, name: 跟随系统 }
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: amber
+      toggle: { icon: material/brightness-7, name: 切换到深色 }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: amber
+      toggle: { icon: material/brightness-4, name: 切换到浅色 }
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc: { permalink: true }
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed: { alternate_style: true }
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search:
+      lang: zh
+
+nav:
+  - 首页: index.md
+  - 快速开始: guide/getting-started.md
+  - 生图服务:
+      - 生图介绍: image-generation/overview.md
+      - Gemini 接入指南: image-generation/gemini.md
+
+extra:
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://www.llmnex.com
+      name: LLMNEX 控制台
+
+copyright: LLMNEX

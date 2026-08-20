@@ -1,0 +1,5 @@
+# MkDocs 构建产物 —— 由 CI 生成并发布,不进仓库
+site/
+.cache/
+__pycache__/
+.venv/
