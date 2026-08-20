@@ -22,7 +22,7 @@ hide:
 
     ---
 
-    两套模型:Nano Banana 最高 4096²、GPT Image 2 走 OpenAI 接口。该选哪个?
+    两套模型:Nano Banana 最高 4096²、GPT Image 2 尺寸逐像素自选。该选哪个?
 
     [:octicons-arrow-right-24: 生图介绍](image-generation/overview.md)
 
@@ -38,7 +38,7 @@ hide:
 
     ---
 
-    标准 OpenAI 图像接口,文生图 / 图生图 / 对话式三条路径。
+    标准 OpenAI 图像接口,尺寸逐像素自选,文生图 / 图生图。
 
     [:octicons-arrow-right-24: 查看文档](image-generation/gpt-image-2.md)
 

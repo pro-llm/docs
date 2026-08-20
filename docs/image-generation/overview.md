@@ -5,9 +5,10 @@
 | 系列 | 协议 | 最高分辨率 | 宽高比 | 指南 |
 | --- | --- | --- | --- | --- |
 | **Nano Banana(香蕉)** | Gemini 兼容 | 4096² | 14 种 | [Gemini 接入指南](gemini.md) |
-| **GPT Image 2** | OpenAI 兼容 | 2880² | 5 种 | [GPT Image 2 接入指南](gpt-image-2.md) |
+| **GPT Image 2** | OpenAI 兼容 | 3840×2160 | **尺寸自选** | [GPT Image 2 接入指南](gpt-image-2.md) |
 
-要更高分辨率或更多宽高比,选香蕉;已经在用 OpenAI SDK、想少改代码,选 GPT Image 2。
+香蕉的分辨率上限更高(4096²),但尺寸只能从 12 个模型 × 14 种比例里挑;
+GPT Image 2 的尺寸是**逐像素自选**的,且用标准 OpenAI SDK 就能调。
 
 ## 香蕉系列
 
@@ -56,23 +57,30 @@
     `POST /v1/chat/completions`
 
     适合已有 OpenAI SDK 的项目,但**设置不了宽高比**(`aspectRatio` 不在 OpenAI 参数集里)。
+    这条路径针对香蕉系列;GPT Image 2 请用 `/v1/images/generations` 与 `/v1/images/edits`。
 
 ## GPT Image 2
 
-四个模型,后端同一个,**分辨率档由模型名决定**:
+**尺寸逐像素自选**,不是从固定档位里挑 —— `size` 写多大就出多大:
 
-| 模型 | 分辨率档 | 实测输出(1:1) |
-| --- | --- | --- |
-| `gpt-image-2-1k` | 1K | 1024 × 1024 |
-| `gpt-image-2-2k` | 2K | 2048 × 2048 |
-| `gpt-image-2-4k` | 4K | **2880 × 2880** |
-| `gpt-image-2-c` | 自选 | 由请求里的 `quality` 决定,不传则 1K |
+```json
+{"model": "gpt-image-2-medium", "prompt": "...", "size": "2048x1152"}
+```
 
-三个端点都能出图:`/v1/images/generations`、`/v1/images/edits`、`/v1/chat/completions`。
-宽高比通过标准 `size` 参数选,共 5 种。细节见 [GPT Image 2 接入指南](gpt-image-2.md)。
+约束四条:宽高都是 **16 的倍数**、最长边 **≤ 3840**、比例 **≤ 3:1**、
+总像素 **655,360 ~ 8,294,400**。不满足或不传则自动用 `1024x1024`(不报错)。
 
-!!! note "4K 档是 2880²"
-    GPT Image 2 的 4K 比香蕉的 4K 小。需要 4096² 请用 `gemini-*-4k`。
+模型名只决定 `quality` 的默认值,**不影响尺寸**:
+
+| 模型 | 默认 `quality` |
+| --- | --- |
+| `gpt-image-2-low` | `low` |
+| `gpt-image-2-medium` | `medium` |
+| `gpt-image-2-high` | `high` |
+| `gpt-image-2-c` / `gpt-image-2` | 由你指定,不传则 `low` |
+
+两个端点:`/v1/images/generations`(文生图)、`/v1/images/edits`(图生图)。
+细节见 [GPT Image 2 接入指南](gpt-image-2.md)。
 
 ## 耗时参考
 
