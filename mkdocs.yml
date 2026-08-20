@@ -41,7 +41,9 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - tables
-  - toc: { permalink: true }
+  - toc:
+      permalink: true
+      slugify: !!python/name:pymdownx.slugs.uslugify
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight:
@@ -65,6 +67,7 @@ nav:
   - 生图服务:
       - 生图介绍: image-generation/overview.md
       - Gemini 接入指南: image-generation/gemini.md
+      - GPT Image 2 接入指南: image-generation/gpt-image-2.md
 
 extra:
   social:
