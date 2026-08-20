@@ -86,7 +86,7 @@ Authorization: Bearer YOUR_API_KEY
 
 ## 模型
 
-五个模型名,**后端是同一个 GPT Image 2**,区别只在 `quality`:
+四个模型名,**后端是同一个 GPT Image 2**,区别只在 `quality`:
 
 | 模型 | `quality` | 请求里传 `quality` |
 | --- | --- | --- |
@@ -94,9 +94,8 @@ Authorization: Bearer YOUR_API_KEY
 | `gpt-image-2-medium` | 固定 `medium` | 忽略 |
 | `gpt-image-2-high` | 固定 `high` | 忽略 |
 | `gpt-image-2-c` | 由你指定,不传则 `low` | **生效** |
-| `gpt-image-2` | 同上 | **生效** |
 
-**名字只决定 `quality`,不影响尺寸** —— 尺寸永远由 `size` 决定,五个名字一视同仁。
+**名字只决定 `quality`,不影响尺寸** —— 尺寸永远由 `size` 决定,四个名字一视同仁。
 
 !!! note "带档位的三个名字会忽略请求里的 `quality`"
     选了 `gpt-image-2-medium` 就一定按 `medium` 出图,传 `quality: "high"` 也不会变。
@@ -107,8 +106,8 @@ Authorization: Bearer YOUR_API_KEY
 
 取值 `low` / `medium` / `high`,与官方一致。它控制**渲染精细度**,不影响输出尺寸。
 
-**只有 `gpt-image-2-c` 和 `gpt-image-2` 会读这个字段**,不传则为 `low`。
-带档位后缀的三个名字固定用名字里的档,忽略此字段。
+**只有 `gpt-image-2-c` 会读这个字段**,不传则为 `low`。
+另外三个名字固定用名字里的档,忽略此字段。
 
 ## size
 

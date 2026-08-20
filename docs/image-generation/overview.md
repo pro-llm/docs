@@ -77,7 +77,7 @@ GPT Image 2 的尺寸是**逐像素自选**的,且用标准 OpenAI SDK 就能调
 | `gpt-image-2-low` | 固定 `low`(忽略请求里的 `quality`) |
 | `gpt-image-2-medium` | 固定 `medium`(同上) |
 | `gpt-image-2-high` | 固定 `high`(同上) |
-| `gpt-image-2-c` / `gpt-image-2` | 由请求里的 `quality` 决定,不传则 `low` |
+| `gpt-image-2-c` | 由请求里的 `quality` 决定,不传则 `low` |
 
 两个端点:`/v1/images/generations`(文生图)、`/v1/images/edits`(图生图)。
 细节见 [GPT Image 2 接入指南](gpt-image-2.md)。
