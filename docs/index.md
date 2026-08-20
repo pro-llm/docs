@@ -22,7 +22,7 @@ hide:
 
     ---
 
-    Nano Banana 系列,文生图 / 图生图 / 14 种比例,最高 4096²。
+    两套模型:Nano Banana 最高 4096²、GPT Image 2 走 OpenAI 接口。该选哪个?
 
     [:octicons-arrow-right-24: 生图介绍](image-generation/overview.md)
 
@@ -33,6 +33,14 @@ hide:
     `generateContent` 原生协议,12 个模型的完整参数与实测数据。
 
     [:octicons-arrow-right-24: 查看文档](image-generation/gemini.md)
+
+-   :material-image-edit-outline:{ .lg .middle } **GPT Image 2 接入指南**
+
+    ---
+
+    标准 OpenAI 图像接口,文生图 / 图生图 / 对话式三条路径。
+
+    [:octicons-arrow-right-24: 查看文档](image-generation/gpt-image-2.md)
 
 -   :material-console:{ .lg .middle } **控制台**
 
@@ -59,3 +67,4 @@ https://www.llmnex.com
 | Google Gemini SDK / `generateContent` | ✅ |
 | OpenAI SDK / `chat.completions` | ✅ |
 | OpenAI `images.generations` | ✅ |
+| OpenAI `images.edits` | ✅ |
