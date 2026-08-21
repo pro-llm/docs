@@ -181,9 +181,25 @@ x-goog-api-key: YOUR_API_KEY
 | 编码 | 纯 base64,**不要**带 `data:image/png;base64,` 前缀 |
 | 输出分辨率 | 仍由模型后缀决定,与输入图尺寸无关 |
 
-## 流式返回
+## 流式返回(不建议使用)
 
-把端点换成 `:streamGenerateContent` 即可。返回 SSE 格式,每行以 `data: ` 开头。
+!!! warning "建议用非流式的 `:generateContent`"
+    **图像是一次性生成的,没有中间产物可以流式推送。**这个端点会先等整张图出完,
+    再把最终结果包成**单个 SSE chunk** 发出 —— chunk 里的内容与 `generateContent`
+    的响应体逐字节相同。
+
+    也就是说,你付出了 SSE 解析的成本,却拿不到任何流式的好处:
+
+    - **不会更早看到画面**,等待时间与非流式完全一致
+    - **不能保持连接活跃** —— 出图期间服务端不发送任何字节,防不了中间层空闲超时
+    - **整张图的 base64 挤在一行 `data:` 里**,常见 7–11 MB,部分 SSE 客户端和反向代理
+      对单行长度有限制,反而更容易被截断
+    - **出错时不走 SSE**,直接返回 JSON 错误体,客户端要额外处理两种响应格式
+
+    真正防超时的做法是把客户端超时设到 300 秒,见下方「超时与耗时」。
+
+保留该端点是为了兼容已有代码。用法是把端点换成 `:streamGenerateContent`,
+返回 SSE 格式,每行以 `data: ` 开头。
 
 ```bash
 curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:streamGenerateContent" \
@@ -191,9 +207,6 @@ curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:stre
   -H "Content-Type: application/json" --max-time 300 \
   -d '{"contents":[{"parts":[{"text":"a plain grey cube"}]}]}'
 ```
-
-!!! info "流式不会逐步渲染画面"
-    图像是一次性生成的,流式只是把最终结果以 SSE 包一层送出。它的价值在于保持连接活跃、避免中间层超时断开。
 
 ## 响应结构
 
