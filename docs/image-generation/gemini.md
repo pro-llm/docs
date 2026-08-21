@@ -257,30 +257,6 @@ curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:stre
 !!! danger "不要对 451 自动重试"
     同样的提示词每次都会被拦,只会白白消耗额度。把它当作参数错误处理。
 
-## OpenAI 兼容路径
-
-如果你的代码已经在用 OpenAI SDK,也可以走 `/v1/chat/completions`,不必改成 Gemini 格式。
-
-```bash
-curl -X POST "https://www.llmnex.com/v1/chat/completions" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" --max-time 300 \
-  -d '{
-    "model": "gemini-3-pro-image-1k",
-    "messages": [{"role":"user","content":"a red ceramic teapot"}],
-    "stream": false
-  }'
-```
-
-返回的 `choices[0].message.content` 是一段 Markdown,图片以 **base64 data URI** 内嵌:
-
-```text
-![image](data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...)
-```
-
-!!! warning "这条路径设置不了宽高比"
-    `aspectRatio` 不在 OpenAI 参数集里,会被丢弃。**需要控制比例请用 `generateContent`。**
-
 ## 完整示例
 
 === "Python"

@@ -46,18 +46,9 @@ GPT Image 2 的尺寸是**逐像素自选**的,且用标准 OpenAI SDK 就能调
 
 ## 接入方式
 
-=== "推荐:Gemini 原生协议"
+`POST /v1beta/models/{model}:generateContent`
 
-    `POST /v1beta/models/{model}:generateContent`
-
-    **完整支持**宽高比、参考图、流式。详见 [Gemini 接入指南](gemini.md)。
-
-=== "OpenAI 兼容协议"
-
-    `POST /v1/chat/completions`
-
-    适合已有 OpenAI SDK 的项目,但**设置不了宽高比**(`aspectRatio` 不在 OpenAI 参数集里)。
-    这条路径针对香蕉系列;GPT Image 2 请用 `/v1/images/generations` 与 `/v1/images/edits`。
+**完整支持**宽高比、参考图、流式。详见 [Gemini 接入指南](gemini.md)。
 
 ## GPT Image 2
 

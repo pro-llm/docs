@@ -19,18 +19,6 @@
       -d '{"contents":[{"parts":[{"text":"a red ceramic teapot"}]}]}'
     ```
 
-=== "生图(OpenAI 协议)"
-
-    ```bash
-    curl -X POST "https://www.llmnex.com/v1/chat/completions" \
-      -H "Authorization: Bearer YOUR_API_KEY" \
-      -H "Content-Type: application/json" \
-      --max-time 300 \
-      -d '{"model":"gemini-3-pro-image-1k",
-           "messages":[{"role":"user","content":"a red ceramic teapot"}],
-           "stream":false}'
-    ```
-
 === "查看可用模型"
 
     ```bash
