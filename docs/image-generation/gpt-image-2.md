@@ -22,6 +22,7 @@
 | 图生图 | `POST /v1/images/edits` |
 | 返回形态 | base64 PNG(`data[0].b64_json`) |
 | 单次出图 | 1 张(最多 4,见 [n 参数](#n)) |
+| 参考图 | 一张或多张,见 [多张参考图](#多张参考图) |
 
 ## 鉴权
 
@@ -151,7 +152,7 @@ Authorization: Bearer YOUR_API_KEY
 
 ## 图生图
 
-`POST /v1/images/edits`,`multipart/form-data`。参数与文生图一致,额外带一个 `image` 文件。
+`POST /v1/images/edits`,`multipart/form-data`。参数与文生图一致,额外带 `image` 文件 —— **一张或多张都可以**。
 
 === "curl"
 
@@ -189,9 +190,51 @@ Authorization: Bearer YOUR_API_KEY
 
 输出尺寸由 `size` 决定,**与输入图的尺寸无关**。
 
+### 多张参考图
+
+把 `image` 字段重复多次即可,也接受官方 SDK 用的 `image[]` 写法,两种等价。
+所有参考图都会送到模型,在提示词里说明每张图各起什么作用。
+
+=== "curl"
+
+    ```bash
+    curl -X POST "https://www.llmnex.com/v1/images/edits" \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      --max-time 600 \
+      -F "model=gpt-image-2-high" \
+      -F "prompt=put the object from the first image and the object from the second image side by side on a wooden table" \
+      -F "size=1024x1024" \
+      -F "image=@first.png;type=image/png" \
+      -F "image=@second.png;type=image/png"
+    ```
+
+=== "OpenAI SDK"
+
+    ```python
+    result = client.images.edit(
+        model="gpt-image-2-high",
+        image=[open("first.png", "rb"), open("second.png", "rb")],
+        prompt="put the object from the first image and the object from the second image side by side on a wooden table",
+        size="1024x1024",
+    )
+    ```
+
+| 项 | 值 |
+| --- | --- |
+| 字段名 | `image`(可重复)或 `image[]`,可混用 |
+| 数量 | 至少 1 张;一张都没有返回 400(`"param": "image"`) |
+| 格式 | PNG / JPEG / WebP |
+
 ## n 参数 { #n }
 
 **建议传 1,默认也是 1。** 最大支持 4。
+
+**超出范围直接报 400**,不会静默夹到 4:`n` 不是整数、小于 1 或大于 4 都会返回
+`invalid_request_error`(`"param": "n"`,消息 `n must be between 1 and 4`),不扣费。
+
+```json
+{"error": {"message": "n must be between 1 and 4", "type": "invalid_request_error", "param": "n"}}
+```
 
 !!! danger "n > 1 会成倍变慢、成倍计费"
     多张图是**依次生成**的,不是并行。`n=4` 大约需要 **4 倍时间**,而且**按张计费**
@@ -231,7 +274,7 @@ Authorization: Bearer YOUR_API_KEY
 
 | HTTP | 含义 | 怎么办 |
 | --- | --- | --- |
-| 400 | 提示词被内容安全拦截 | 改提示词。**不要重试** |
+| 400 | 提示词被内容安全拦截;或参数不合法(`n` 超出 1 – 4、图生图缺少 `image`) | 看 `error.param`:有值就是参数问题,改参数;没有就是内容拦截,改提示词。**不要原样重试** |
 | 401 | Key 无效 | 检查 `Authorization` 头 |
 | 429 | 上游限流 | 已在内部重试过;稍后再试,别加激进重试 |
 | 451 | 提示词或参考图被内容安全拦截 | 同 400,**不要重试** |
