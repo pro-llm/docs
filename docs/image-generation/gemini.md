@@ -102,7 +102,7 @@ x-goog-api-key: YOUR_API_KEY
 }
 ```
 
-`imageSize` 取值:`1K` / `2K` / `4K`。
+`imageSize` 取值:`1K` / `2K` / `4K`。**只有这三档**:传 `512` 不会报错,按 `1K` 出图。
 
 !!! warning "别在固定档位的模型上传 imageSize"
     在 `-1k` / `-2k` / `-4k` 模型上传 `imageSize` **不会生效** —— 分辨率已由模型名锁定。需要动态切换分辨率,请用 `-c` 系列。
@@ -152,6 +152,11 @@ x-goog-api-key: YOUR_API_KEY
 !!! tip
     2K / 4K 档的输出像素按同样比例等倍放大。传入未支持的比例会自动回落到 `1:1`,不会报错。
 
+!!! note "四个超长比例的像素比参考值大"
+    `1:4` `4:1` `1:8` `8:1` 这四个比例能出图,但输出像素约为同档参考值的 **4 倍**
+    (例如 `1:4` 在 1K 档出 1024 × 4128,而不是 512 × 2048),耗时也相应更长。
+    `gemini-3-pro-image` 系列**不支持**这四个超长比例,会返回 400。
+
 ## 图生图
 
 在 `parts` 里加入 `inlineData` 即为图生图。文字描述你想要的改动,参考图提供内容或风格来源。
@@ -180,6 +185,18 @@ x-goog-api-key: YOUR_API_KEY
 | 格式 | PNG / JPEG / WebP,由 `mimeType` 声明 |
 | 编码 | 纯 base64,**不要**带 `data:image/png;base64,` 前缀 |
 | 输出分辨率 | 仍由模型后缀决定,与输入图尺寸无关 |
+
+## 不生效的参数
+
+下面这些官方参数本站会**接受但不生效**(返回 200,输出与不传时相同),请不要依赖:
+
+| 参数 | 实际行为 |
+| --- | --- |
+| `generationConfig.candidateCount` | 恒只返回 1 张图,传 2 或更大也一样 |
+| `generationConfig.responseModalities` 含 `TEXT` | 只返回图片,不返回文字 |
+| `tools` 里的 `googleSearch` | 不联网,响应无 `groundingMetadata` |
+| `generationConfig.thinkingConfig` | 不生效,响应无思考 token 计数 |
+| `contents[].parts[].fileData`(URL 参考图) | 不读取,参考图请用 `inlineData` 内嵌 |
 
 ## 流式返回(不建议使用)
 

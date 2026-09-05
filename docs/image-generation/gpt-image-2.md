@@ -242,6 +242,19 @@ Authorization: Bearer YOUR_API_KEY
 
     需要多张时,更好的做法是自己并发发 4 个 `n=1` 的请求。
 
+## 不生效的参数
+
+下面这些官方参数本站会**接受但不生效**(返回 200,输出与不传时相同),请不要依赖:
+
+| 参数 | 实际行为 |
+| --- | --- |
+| `background: "transparent"` | 恒为不透明背景,回显 `background` 为 `opaque` |
+| `output_format: "jpeg"` / `"webp"` | 恒返回 PNG,回显 `output_format` 为 `png` |
+| `output_compression` | 因为恒为 PNG,压缩率无从生效 |
+| `partial_images` | 流式不返回中间图,只有最终的 `completed` 事件 |
+
+需要透明底或 jpeg / webp,请拿到 PNG 后自行转换。
+
 ## 响应结构
 
 ```json
