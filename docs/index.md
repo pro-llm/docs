@@ -65,6 +65,5 @@ https://www.llmnex.com
 | 你在用 | 直接换 Base URL 即可 |
 | --- | --- |
 | Google Gemini SDK / `generateContent` | ✅ |
-| OpenAI SDK / `chat.completions` | ✅ |
 | OpenAI `images.generations` | ✅ |
 | OpenAI `images.edits` | ✅ |
