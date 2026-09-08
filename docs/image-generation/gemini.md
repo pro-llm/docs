@@ -120,7 +120,6 @@ x-goog-api-key: YOUR_API_KEY
 | `contents[].parts[].inlineData` | object | 参考图,见「图生图」。最多 14 张 |
 | `generationConfig.imageConfig.aspectRatio` | string | 宽高比,如 `"16:9"`。默认 `1:1` |
 | `generationConfig.imageConfig.imageSize` | string | `1K`/`2K`/`4K`,仅 `-c` 模型有效 |
-| `generationConfig.seed` | integer | 随机种子,同参数下可复现 |
 
 ```json
 {
@@ -128,8 +127,7 @@ x-goog-api-key: YOUR_API_KEY
     { "parts": [ { "text": "a lighthouse on a cliff at dawn, cinematic" } ] }
   ],
   "generationConfig": {
-    "imageConfig": { "aspectRatio": "16:9" },
-    "seed": 42
+    "imageConfig": { "aspectRatio": "16:9" }
   }
 }
 ```
@@ -193,6 +191,7 @@ x-goog-api-key: YOUR_API_KEY
 | 参数 | 实际行为 |
 | --- | --- |
 | `generationConfig.candidateCount` | 恒只返回 1 张图,传 2 或更大也一样 |
+| `generationConfig.seed` | 接受,但**不保证跨请求复现**,同 seed 同提示词也可能出不同的图 |
 | `generationConfig.responseModalities` 含 `TEXT` | 只返回图片,不返回文字 |
 | `tools` 里的 `googleSearch` | 不联网,响应无 `groundingMetadata` |
 | `generationConfig.thinkingConfig` | 不生效,响应无思考 token 计数 |
@@ -250,18 +249,20 @@ curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:stre
 取图路径固定为 `candidates[0].content.parts[*].inlineData.data`。建议遍历 `parts` 找第一个带 `inlineData` 的元素,不要写死索引 0。
 
 !!! warning "4K 图的响应体很大"
-    4K 图的 base64 约 **20–25 MB**。请确认你的 HTTP 客户端与中间层没有更小的响应体上限。
+    4K 图的 base64 约 **25–28 MB**。请确认你的 HTTP 客户端与中间层没有更小的响应体上限,
+    并给传输留出时间:下方的耗时表是服务端出图时间,**不含下载**,弱网下 4K 建议把超时设到 600 秒。
 
 ## 超时与耗时
 
 生图是长耗时操作。**客户端超时请设到 300 秒**,默认的 30 秒或 60 秒几乎必然中途断开。
 
-| 档位 | 常见耗时 | 实测上限 |
+| 档位 | 常见耗时(首字节) | 实测长尾 |
 | --- | --- | --- |
-| 1K | 20 – 45 s | ~90 s |
-| 2K | 30 – 90 s | ~290 s |
-| 4K | 60 – 130 s | ~290 s |
+| 1K | 15 – 45 s | ~90 s |
+| 2K | 20 – 60 s | ~90 s |
+| 4K | 40 – 80 s | ~120 s |
 
+以上是服务端出图时间,图片传输另计(4K 响应约 25–28 MB)。
 耗时受上游负载影响明显,高峰期会整体拉长。服务内部已有自动重试与账号轮换,你收到的错误都是重试之后仍未成功的终态结果 —— **不需要自己加激进的重试**,那只会加重排队。
 
 ## 错误处理
@@ -270,10 +271,13 @@ curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:stre
 | --- | --- | --- |
 | 400 | 请求体不合法,如 `contents` 缺失或为空 | 检查 JSON 结构 |
 | 401 | Key 无效或已过期 | 检查 `Authorization` 头 |
-| 429 | 触发限流 | 退避后重试,建议指数退避起步 2 s |
+| 429 | 上游限流 | 已在内部重试过;**退避 2 – 5 秒后重试一次**通常即可成功,不要循环重试 |
 | 451 | 内容被安全审核拦截 | **终态,重试无用。** 改提示词或参考图 |
-| 500 | 模型不可用,或网关内部错误 | 确认模型名拼写;持续出现请联系我们 |
-| 503 | 上游暂时不可用 | 退避后重试 |
+| 500 | 上游临时不可用,或网关内部错误 | 稍后重试一次;持续出现请联系我们 |
+| 503 | `model_not_found` —— 模型名写错,或你的 Key 没有该模型的权限 | 见下 |
+| 503 | 其他消息(如 `upstream session error`) | 上游连接临时故障,退避后重试一次 |
+
+每个响应都带 `X-Oneapi-Request-Id` 响应头。**报障时请附上这个值**,我们靠它定位到具体请求。
 
 ```json title="451 内容拦截的典型响应"
 {
@@ -286,6 +290,11 @@ curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:stre
 
 !!! danger "不要对 451 自动重试"
     同样的提示词每次都会被拦,只会白白消耗额度。把它当作参数错误处理。
+
+!!! tip "503 `No available channel for model ...`"
+    这条**不是服务故障**,而是「这个 Key 用不了这个模型」:模型名拼错(比如漏了 `-1k` 后缀),
+    或者你的 Key 没被授予该模型的权限。先用 `GET /v1/models` 确认自己能用哪些模型;
+    列表里没有你要调的名字,就联系我们开通。
 
 ## 完整示例
 
