@@ -22,6 +22,7 @@
 | 流式端点 | `POST /v1beta/models/{model}:streamGenerateContent` |
 | 返回形态 | base64 PNG(`inlineData`),不返回外链 URL |
 | 单次出图 | 1 张 |
+| 用量统计 | 非流式响应带 `usageMetadata`(token 数),见 [响应结构](#响应结构) |
 
 能力:**文生图**、**图生图**(最多 14 张参考图)、**14 种宽高比**、**1K / 2K / 4K 三档分辨率**、**流式返回**。
 
@@ -202,7 +203,7 @@ x-goog-api-key: YOUR_API_KEY
 !!! warning "建议用非流式的 `:generateContent`"
     **图像是一次性生成的,没有中间产物可以流式推送。**这个端点会先等整张图出完,
     再把最终结果包成**单个 SSE chunk** 发出 —— chunk 里的内容与 `generateContent`
-    的响应体逐字节相同。
+    的响应体一致,只是**没有 `usageMetadata`**。
 
     也就是说,你付出了 SSE 解析的成本,却拿不到任何流式的好处:
 
@@ -211,6 +212,7 @@ x-goog-api-key: YOUR_API_KEY
     - **整张图的 base64 挤在一行 `data:` 里**,常见 7–11 MB,部分 SSE 客户端和反向代理
       对单行长度有限制,反而更容易被截断
     - **出错时不走 SSE**,直接返回 JSON 错误体,客户端要额外处理两种响应格式
+    - **不返回 `usageMetadata`**,需要用量统计必须用非流式
 
     真正防超时的做法是把客户端超时设到 300 秒,见下方「超时与耗时」。
 
@@ -226,6 +228,8 @@ curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:stre
 
 ## 响应结构
 
+非流式响应示例(`gemini-3-pro-image-1k` 文生图):
+
 ```json
 {
   "candidates": [
@@ -240,13 +244,49 @@ curl -N -X POST "https://www.llmnex.com/v1beta/models/gemini-3-pro-image-1k:stre
             }
           }
         ]
-      }
+      },
+      "finishReason": "STOP",
+      "index": 0
     }
-  ]
+  ],
+  "responseId": "ee2bcd924c5d",
+  "upstreamJobId": "d427bc37-0f6c-458b-93c9-d40a0b5412f7",
+  "usageMetadata": {
+    "promptTokenCount": 4,
+    "promptTokensDetails": [ { "modality": "TEXT", "tokenCount": 4 } ],
+    "candidatesTokenCount": 1120,
+    "candidatesTokensDetails": [ { "modality": "IMAGE", "tokenCount": 1120 } ],
+    "totalTokenCount": 1124
+  }
 }
 ```
 
 取图路径固定为 `candidates[0].content.parts[*].inlineData.data`。建议遍历 `parts` 找第一个带 `inlineData` 的元素,不要写死索引 0。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `candidates[]` | array | 恒 1 个元素 |
+| `candidates[].content.role` | string | 恒 `model` |
+| `candidates[].content.parts[].inlineData.mimeType` | string | 恒 `image/png` |
+| `candidates[].content.parts[].inlineData.data` | string | base64 编码的 PNG |
+| `candidates[].finishReason` | string | 正常出图为 `STOP` |
+| `candidates[].index` | integer | 恒 `0` |
+| `responseId` | string | 本站请求 ID,与响应头 `X-Oneapi-Request-Id` 相同 |
+| `upstreamJobId` | string | 上游任务号,报障时连同 `responseId` 一起附上 |
+| `usageMetadata` | object | 本次消耗的 token 数,见下 |
+
+官方响应里的 `promptFeedback`、`modelVersion`、`safetyRatings`、`parts[].text` 本站不返回,请不要依赖。
+
+### usageMetadata
+
+`usageMetadata` 是本次请求消耗的 token 数,结构与官方一致:`promptTokenCount`(提示词与参考图)、
+`candidatesTokenCount`(生成的图片)、`totalTokenCount`,以及 `*Details` 里按模态的拆分。
+生成图片的 token 数只与模型和分辨率档有关。
+
+!!! note "三点说明"
+    - **流式(`:streamGenerateContent`)不返回 `usageMetadata`**。需要用量统计请用非流式。
+    - `promptTokenCount` 为估算值,带参考图时尤其如此,仅供参考;`candidatesTokenCount` 按官方规则计算。
+    - `usageMetadata` 是用量统计,不等于计费方式。实际扣费以账户账单为准。
 
 !!! warning "4K 图的响应体很大"
     4K 图的 base64 约 **25–28 MB**。请确认你的 HTTP 客户端与中间层没有更小的响应体上限,

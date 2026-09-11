@@ -23,6 +23,7 @@
 | 返回形态 | base64 PNG(`data[0].b64_json`) |
 | 单次出图 | 1 张(最多 4,见 [n 参数](#n)) |
 | 参考图 | 一张或多张,见 [多张参考图](#多张参考图) |
+| 用量统计 | 非流式响应带 `usage`(token 数),见 [响应结构](#响应结构) |
 
 ## 鉴权
 
@@ -257,20 +258,63 @@ Authorization: Bearer YOUR_API_KEY
 需要透明底或 jpeg / webp,请拿到 PNG 后自行转换。
 
 `stream: true` 可以用:返回 SSE,只有 `image_generation.completed` 一个带图事件,没有中间图,
-等待时间与非流式相同,**没有流式收益**,建议用非流式。
+等待时间与非流式相同,**没有流式收益**,而且**流式响应不带 `usage`**,建议用非流式。
 
 ## 响应结构
 
+非流式响应示例(`gpt-image-2-low` 文生图 1024 × 1024):
+
 ```json
 {
-  "created": 1787250000,
+  "created": 1789097222,
+  "model": "gpt-image-2-low",
   "data": [
-    { "b64_json": "iVBORw0KGgoAAAANSUhEUg..." }
-  ]
+    {
+      "b64_json": "iVBORw0KGgoAAAANSUhEUg...",
+      "upstream_job_id": "4c9d1fbb-f1a1-4532-879e-325793fc0e67"
+    }
+  ],
+  "size": "1024x1024",
+  "quality": "low",
+  "output_format": "png",
+  "background": "opaque",
+  "request_id": "befc0426991b",
+  "usage": {
+    "input_tokens": 9,
+    "input_tokens_details": { "image_tokens": 0, "text_tokens": 9 },
+    "output_tokens": 196,
+    "output_tokens_details": { "image_tokens": 196, "text_tokens": 0 },
+    "total_tokens": 205
+  }
 }
 ```
 
 图片是 base64 编码的 PNG,取 `data[0].b64_json` 解码即可。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `created` | integer | 响应生成时间,Unix 秒 |
+| `model` | string | 请求的模型名 |
+| `data[]` | array | 图片列表,长度等于 `n` |
+| `data[].b64_json` | string | base64 编码的 PNG。传 `response_format: "url"` 时换成 `data[].url` |
+| `data[].upstream_job_id` | string | 上游任务号,报障时连同 `request_id` 一起附上 |
+| `size` / `quality` | string | 回显尺寸与质量档 |
+| `output_format` | string | 恒为 `png` |
+| `background` | string | 恒为 `opaque` |
+| `request_id` | string | 本站请求 ID,与响应头 `X-Oneapi-Request-Id` 相同 |
+| `usage` | object | 本次消耗的 token 数,见下 |
+
+官方响应里的 `data[].revised_prompt` 本站不返回,请不要依赖。
+
+### usage
+
+`usage` 是本次请求消耗的 token 数,结构与官方一致:`input_tokens`(提示词与参考图)、
+`output_tokens`(生成的图片)、`total_tokens`,以及 `*_details` 里按文本 / 图片的拆分。
+参考图越大、输出质量档越高,token 越多;多张参考图逐张累加,`n > 1` 时输出侧按张累加。
+
+!!! note "两点说明"
+    - **流式(`stream: true`)不返回 `usage`**,`image_generation.completed` 事件里没有这个字段。需要用量统计请用非流式。
+    - `usage` 是用量统计,不等于计费方式。实际扣费以账户账单为准。
 
 ## 超时与耗时
 

@@ -43,6 +43,7 @@ GPT Image 2 的尺寸是**逐像素自选**的,且用标准 OpenAI SDK 就能调
 | 流式返回 | ⚠️ 支持但[不建议](gemini.md#流式返回不建议使用) —— 单 chunk,无流式收益 |
 | 单次出图张数 | 1 张 |
 | 返回形态 | base64 PNG(不返回外链 URL) |
+| 用量统计 | ✅ 非流式响应带 `usageMetadata`(token 数);流式不带 |
 
 ## 接入方式
 
@@ -71,7 +72,7 @@ GPT Image 2 的尺寸是**逐像素自选**的,且用标准 OpenAI SDK 就能调
 | `gpt-image-2-c` | 由请求里的 `quality` 决定,不传则 `low` |
 
 两个端点:`/v1/images/generations`(文生图)、`/v1/images/edits`(图生图,**支持多张参考图**)。
-`n` 最多 4,超出返回 400。
+`n` 最多 4,超出返回 400。非流式响应带 `usage`(token 数),流式不带。
 细节见 [GPT Image 2 接入指南](gpt-image-2.md)。
 
 ## 耗时参考
